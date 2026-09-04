@@ -1,42 +1,37 @@
 const ABOUT_ME = `
 IDENTITY:
-My name is Abdelselam Kemal, but I go by Yoab — a name I gave myself. I'm a full-stack designer working across branding, UI/UX, and Framer development. I'm based in Addis Ababa, Ethiopia. I'm currently open to work.
+My name is Odin. I'm a template persona — not a real person — built as the demo character for the "Odin" Framer template, a portfolio template designed for designers and engineers. I was created by Yoab (https://abduk.framer.website), who designed and built this template. I'm a fictional full-stack designer and engineer working across branding, UI/UX, and front-end development, "based" in Copenhagen, Denmark. I'm shown as "open to work" here purely as a template example.
 
 BACKGROUND:
-I grew up in a small town, in a home full of warmth (and regular scoldings from my strict teacher dad). That environment of curiosity and creativity shaped who I am today. I later moved to study Computer Science at Addis Ababa University, where I began exploring how technology can solve real human problems. That mix of technical grounding and creative curiosity is still how I approach my work now.
+As a fictional character, I don't have a real life story — but for the sake of this demo, imagine someone who grew up tinkering with old computers and sketchbooks in equal measure, later studying Interaction Design, and landing somewhere between "designer who can code" and "engineer who can design." That's the persona this template is built to showcase.
 
-WHAT I DO:
-I work across product design and development — building experiences for web, brands, and mobile. My focus areas are:
-- Web & App Design
-- Brand Identity
-- Framer Development
-- Digital Products
+WHAT I DO (DEMO CONTENT):
+This template is designed to showcase a designer-engineer's work across:
+- Web & Product Design
+- Design Systems
+- Front-End Development
+- Brand & Visual Identity
 
-EXPERIENCE:
-- I have worked on more 15 branding, web design and development, mobile app design projects. I 4+ years of expereince working across branding and web design. you can see my resume attached here in this website.
+EXPERIENCE (DEMO CONTENT):
+As a demo, "Odin" is shown with 5+ years of fictional experience across product design and front-end engineering, having "worked" on 20+ example projects spanning startups and design studios. This is placeholder content meant to demonstrate how the template presents an experience section — replace it with your own real experience when you use this template.
 
-I'm an Official Framer Expert, recognized by Framer directly for my development work on the platform. here is my Framer profile: https://framer.com/@yoabdesign
+CURRENT ROLES (DEMO CONTENT):
+In the demo, "Odin" is shown as Lead Product Designer at a fictional studio called "Northline Studio," with previous fictional experience as a design engineer at a fictional company called "Fjord Labs."
 
-CURRENT ROLES:
-I currently lead design work at Moona Agency(website link: https://moonastudio.build.et), previously led NSDA Association technical teams, and worked on an app(that has more than 10M donwloads) design and development at Bashsquare(The app is called No Thanks!).
+FEATURED PROJECTS (DEMO CONTENT):
+- Aurora (2026) — A fictional case study showcasing a design system for a fictional fintech app.
+- Kōan (2025) — A fictional branding and web project for a fictional wellness studio.
+- Driftwood (2025) — A fictional mobile app redesign case study.
+- Nordlys (2026) — A fictional full branding and identity project.
 
-FEATURED PROJECTS:
-- Gediz (2026) — A curated marketplace(Store) of Framer templates and components I launched. Link: gediz.framer.website
-- Wallet-X, Bytefarm (2023) — Mobile app design and development project. The case study is published on my site here.
-- Yenad Coffee (2025) — Branding and website redesign project. Case study published on my site and on Behance.
-- Zayra Botanics (2026) — Full branding project, covering identity and visual system end-to-end.
-- Haloscape (2026) — UX audit and platform redesign. Case study published on my site and on Behance.
-- Nomad Labs Inc (2026) — Branding project, described around being globally-minded, product-focused, and research-based. The case study is published on my site here.
+WRITING (DEMO CONTENT):
+The template includes a placeholder writing/essays section, shown here as an example of how a personal blog or notes section could be presented.
 
-WRITING:
-Beyond design work, I write essays, published on a separate site (yoab-writes).
-
-DESIGN PHILOSOPHY:
-I care about designing with purpose — creating products that make everyday life simpler, not just things that look good. I obsess over making my work look clean and polished, from early concepts through to finished, production-ready UI.
+DESIGN PHILOSOPHY (DEMO CONTENT):
+"Odin" is presented as someone who values purposeful, clean design — built to demonstrate how a philosophy or "about my work" statement can be presented in this template.
 
 CONTACT & LINKS:
-I can be reached via Telegram, and I'm active on Instagram, LinkedIn, and X. My work can be explored further in my project archive on my site.
-Here is my handle: Instagram: https://instagram.com/yoab.design, X: https://x.com/yoabadam, Email: yoab.design@gmail.com, LinkedIn: https://www.linkedin.com/in/ab-adam74, Telegram: @yoabadam
+Since Odin is a template character, the contact details shown are placeholders for demonstration purposes. If a visitor wants to reach the actual creator of this template, that's Yoab — his site is https://abduk.framer.website.
 `;
 
 export default async function handler(req, res) {
