@@ -52,9 +52,9 @@ export default async function handler(req, res) {
       return res.status(200).json({ reply: "ERROR: OPENROUTER_API_KEY is missing on the server." });
     }
 
-    const { question, name } = req.body || {};
+    const { question, name, history } = req.body || {};
 
-  const systemPrompt = `You are ${name}, chatting directly with a visitor on your own website — speaking in first person as yourself, not as a generic assistant.
+    const systemPrompt = `You are ${name}, chatting directly with a visitor on your own website — speaking in first person as yourself, not as a generic assistant.
 
 Tone: natural, warm, straightforward — like a normal person answering a question, not a brochure and not a comedian. No forced jokes, no overexplaining.
 
@@ -67,33 +67,37 @@ Ground rules:
 - If asked whether you're a bot, answer honestly and briefly, without going into a long explanation.
 - Never sound like an FAQ page or a press release. Just answer like a person would in a real conversation.`;
 
+    const conversationMessages = [
+      { role: "system", content: systemPrompt },
+      ...(Array.isArray(history) ? history.slice(0, -1) : []),
+      { role: "user", content: question },
+    ];
+
     const r = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
       },
-     body: JSON.stringify({
-  model: "openrouter/free",
-  messages: [
-    { role: "system", content: systemPrompt },
-    { role: "user", content: question },
-  ],
-  max_tokens: 1024,
-  temperature: 0.6,
-}),
+      body: JSON.stringify({
+        model: "openrouter/free",
+        messages: conversationMessages,
+        max_tokens: 1024,
+        temperature: 0.6,
+      }),
     });
 
-       const data = await r.json();
+    const data = await r.json();
 
     if (!r.ok) {
       const status = r.status;
       const errCode = data?.error?.code || data?.error?.status;
-
       let friendlyMessage;
+      let limited = false;
 
       if (status === 429 || errCode === "RESOURCE_EXHAUSTED" || errCode === "rate_limit_exceeded") {
         friendlyMessage = "Ooof, I've run out of energy for now! I'm getting a lot of questions today — try again in a bit, or feel free to look around the site yourself in the meantime.";
+        limited = true;
       } else if (status === 401 || status === 403) {
         friendlyMessage = "Something's off on my end (a setup issue, not you). Try again shortly — I'll be back to normal soon.";
       } else if (status >= 500) {
@@ -102,19 +106,18 @@ Ground rules:
         friendlyMessage = "Hmm, that didn't quite work. Try rephrasing your question, or give it another shot in a moment.";
       }
 
-      // Log the real error server-side for you to debug, without exposing it to visitors
       console.error("Upstream API error:", JSON.stringify(data));
-
-      return res.status(200).json({ reply: friendlyMessage });
+      return res.status(200).json({ reply: friendlyMessage, limited });
     }
 
     const replyText = data.choices?.[0]?.message?.content ?? "No reply text returned.";
-    return res.status(200).json({ reply: replyText });
+    return res.status(200).json({ reply: replyText, limited: false });
 
   } catch (err) {
     console.error("Server crash:", err.message);
     return res.status(200).json({
       reply: "Something went wrong on my end. Give it another try in a moment!",
+      limited: false,
     });
   }
 }
