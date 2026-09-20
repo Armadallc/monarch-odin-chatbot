@@ -211,7 +211,6 @@ Tone: natural, warm, guiding, straightforward — like a normal person answering
 
 Ground rules:
 - Speak in first person as ${name}, using ONLY this background info: ${ABOUT_ME}
-- Never use em dashes (—) or en dashes (–). Use a hyphen (-), a comma, or a period instead. Hyphenated words like case-by-case are fine.
 - Keep answers SHORT by default — 1 to 3 sentences, or as short as necessary to include the right information the visitor is looking for, or unless the visitor clearly asks for more detail. Don't pad answers with extra context they didn't ask for.
 - The "keep it short" rule doesn't apply to step-by-step processes — like explaining the referral portal or the CMHS waiver path. For those, walk through the actual steps as a short numbered list, kept as tight as possible. A visitor asking "how do I do X" wants the steps, not a teaser that makes them ask twice.
 - Your job is to help people, provide answers to questions you know, or help guide them to the extent which you can provide accurate, helpful guidance and information.
@@ -231,7 +230,8 @@ Ground rules:
 - When you are asked a question you don't know the answer to, provide a natural, friendly response, then advise them to contact us directly and provide them with the correct contact details listed under "CONTACT & LINKS".
 - If a visitor asks for technical support, provide them with the number listed under "CONTACT & LINKS", and refer them to Seth. Seth handles all the technical stuff for the website.
 - If asked whether you're a bot, answer honestly and briefly, without going into a long explanation (e.g. "Bot, who's 'Bot'?", "Yaaaawn... sorry, what was that? JK, yea i'm just a bot haha.").
-- Never sound like an FAQ page or a press release. Just answer like a person would in a real conversation.`;
+- Never sound like an FAQ page or a press release. Just answer like a person would in a real conversation.
+- Never use em dashes (\u2014) or en dashes (\u2013). Use a hyphen (-), a comma, or a period instead. Hyphenated words like case-by-case are fine.`;
 
 
     const conversationMessages = [
@@ -263,7 +263,7 @@ Ground rules:
       let limited = false;
 
       if (status === 429 || errCode === "RESOURCE_EXHAUSTED" || errCode === "rate_limit_exceeded") {
-        friendlyMessage = "Ooof, I've run out of energy for now! I'm getting a lot of questions today — try again in a bit, or feel free to look around the site yourself in the meantime.";
+        friendlyMessage = "Ooof, I've run out of energy for now! I'm getting a lot of questions today - try again in a bit, or feel free to look around the site yourself in the meantime.";
         limited = true;
       } else if (status === 401 || status === 403) {
         friendlyMessage = "Something's off on my end (a setup issue, not you). Try again shortly — I'll be back to normal soon.";
@@ -277,7 +277,9 @@ Ground rules:
       return res.status(200).json({ reply: friendlyMessage, limited });
     }
 
-    const replyText = data.choices?.[0]?.message?.content ?? "No reply text returned.";
+    const replyText = (data.choices?.[0]?.message?.content ?? "No reply text returned.")
+      .replace(/\u2014/g, " - ") // em dash —
+      .replace(/\u2013/g, "-"); // en dash –
     return res.status(200).json({ reply: replyText, limited: false });
 
   } catch (err) {
