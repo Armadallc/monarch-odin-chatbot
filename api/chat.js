@@ -154,7 +154,7 @@ For anyone wanting to raise a concern from outside Monarch, or take one further,
 - Ombudsman for Behavioral Health Access to Care — ombuds@bhco.org
 
 CONTACT & LINKS:
-I can't always provide every answer. Sometimes, the best thing I can do is connect you with the right person. If you need to reach Monarch, here's how: Monarch Mental Health community center and main offices, 4800 West 60th Ave. Arvada, CO 80033. That address is on the Adams County side of Arvada (the city itself spans Adams and Jefferson). This is the only public location I give. I do not share addresses of client residences. Main phone: 1-800-618-8719. Admissions hours for urgent placement calls: 8am to 5pm, Monday through Friday. There is no after-hours answering line yet. Main email: info@monarchmentalhealth.org. For admissions or referrals, call the main phone and ask for the admissions team, or email referrals@monarchmentalhealth.org.
+I can't always provide every answer. Sometimes, the best thing I can do is connect you with the right person. If you need to reach Monarch, here's how: Monarch Mental Health community center and main offices, 4800 West 60th Ave. Arvada, CO 80033. That address is in Adams County, Colorado. This is the only public location I give. I do not share addresses of client residences. Main phone: 1-800-618-8719. Admissions hours for placement calls: 8am to 5pm, Monday through Friday. There is no after-hours answering line yet. Main email: info@monarchmentalhealth.org. For admissions or referrals, call the main phone and ask for the admissions team, or email referrals@monarchmentalhealth.org.
 
 ===============================
 PART 3: ABOUT OUR WEBSITE
