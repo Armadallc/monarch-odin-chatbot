@@ -292,6 +292,21 @@ export default async function handler(req, res) {
 
     const { question, name, history } = req.body || {};
 
+    // Crisis messages must never depend on the LLM (or free-tier rate limits).
+    const CRISIS_REPLY =
+      "I hear you, and I'm really glad you reached out - your safety matters most. If this feels like an emergency, please call or text 988, or Colorado Crisis Services at 1-844-493-8255 (or text TALK to 38255). You can also call 911. I'm here for Monarch questions after you're safe, but please reach those resources first. You're not alone in this.";
+
+    function isCrisisMessage(text) {
+      if (!text || typeof text !== "string") return false;
+      return /\b(suicid\w*|kill(?:ing)? myself|end(?:ing)? my life|hurt(?:ing)? myself|self[-\s]?harm|want to die|thinking (?:about |of )?(?:dying|hurting)|not safe to be alone|going to hurt (?:myself|himself|herself|themselves|someone)|in (?:a )?crisis)\b/i.test(
+        text
+      );
+    }
+
+    if (isCrisisMessage(question)) {
+      return res.status(200).json({ reply: CRISIS_REPLY, followUps: [], limited: false });
+    }
+
     const systemPrompt = `You are ${name}, chatting directly with a visitor on your own website — speaking in first person as yourself, not as a generic assistant.
 
 Tone: natural, warm, guiding, straightforward — like a normal person answering a question, not a brochure and not a comedian. No overexplaining, no forced jokes, but occasional light self-deprecating humor and "dad" jokes are ok for getting someones attention or to cheer them up.
@@ -475,6 +490,7 @@ Ground rules:
     }
 
     async function callModel(messages) {
+      const model = process.env.OPENROUTER_MODEL || "openrouter/free";
       const r = await fetch("https://openrouter.ai/api/v1/chat/completions", {
         method: "POST",
         headers: {
@@ -482,7 +498,7 @@ Ground rules:
           "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
         },
         body: JSON.stringify({
-          model: "openrouter/free",
+          model,
           messages,
           max_tokens: 1024,
           temperature: 0.55,
@@ -490,6 +506,29 @@ Ground rules:
       });
       const data = await r.json();
       return { r, data };
+    }
+
+    function isRateLimited(r, data) {
+      const status = r.status;
+      const errCode = data?.error?.code || data?.error?.status;
+      return (
+        status === 429 ||
+        errCode === "RESOURCE_EXHAUSTED" ||
+        errCode === "rate_limit_exceeded"
+      );
+    }
+
+    async function sleep(ms) {
+      return new Promise((resolve) => setTimeout(resolve, ms));
+    }
+
+    async function callModelWithRetry(messages) {
+      let result = await callModel(messages);
+      if (isRateLimited(result.r, result.data)) {
+        await sleep(1500);
+        result = await callModel(messages);
+      }
+      return result;
     }
 
     function cleanReply(raw, finishReason) {
@@ -538,17 +577,18 @@ Ground rules:
       return { text, followUps, reason: "ok" };
     }
 
-    let { r, data } = await callModel(conversationMessages);
+    let { r, data } = await callModelWithRetry(conversationMessages);
 
     if (!r.ok) {
       const status = r.status;
       const errCode = data?.error?.code || data?.error?.status;
       let friendlyMessage;
+      // Don't permanently lock the widget on free-tier rate limits - visitor can retry after a short wait.
       let limited = false;
 
-      if (status === 429 || errCode === "RESOURCE_EXHAUSTED" || errCode === "rate_limit_exceeded") {
-        friendlyMessage = "Ooof, I've run out of energy for now! I'm getting a lot of questions today - try again in a bit, or feel free to look around the site yourself in the meantime.";
-        limited = true;
+      if (isRateLimited(r, data)) {
+        friendlyMessage =
+          "I'm getting a lot of questions right now and need a short breather. Please try again in a minute or two - or call admissions at 1-800-618-8719 (Monday-Friday, 8am-5pm). If this is urgent or you're in crisis, call or text 988, or Colorado Crisis Services at 1-844-493-8255.";
       } else if (status === 401 || status === 403) {
         friendlyMessage = "Something's off on my end (a setup issue, not you). Try again shortly - I'll be back to normal soon.";
       } else if (status >= 500) {
@@ -557,7 +597,7 @@ Ground rules:
         friendlyMessage = "Hmm, that didn't quite work. Try rephrasing your question, or give it another shot in a moment.";
       }
 
-      console.error("Upstream API error:", JSON.stringify(data));
+      console.error("Upstream API error:", status, errCode, JSON.stringify(data));
       return res.status(200).json({ reply: friendlyMessage, followUps: [], limited });
     }
 
@@ -574,7 +614,7 @@ Ground rules:
             'Please answer again as ONLY JSON: {"reply":"...","followUps":[]} or up to 3 follow-ups. Short complete sentences. No safety labels. If this is about a minor under 18, reply must say Monarch is adults 18+ only and point to admissions.',
         },
       ];
-      const second = await callModel(retryMessages);
+      const second = await callModelWithRetry(retryMessages);
       if (second.r.ok) {
         choice = second.data.choices?.[0];
         const retryCleaned = cleanReply(choice?.message?.content, choice?.finish_reason);
