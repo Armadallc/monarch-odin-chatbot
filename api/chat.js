@@ -185,13 +185,17 @@ AFTER ADMISSION / FIRST WEEK:
 The first week is Orientation: about one week to learn program expectations, meet the care team, and settle in. Keep it to about that - then point to Our Community or Admissions for more. Do not invent a detailed day-by-day schedule.
 
 WHO WE SERVE (AGE):
-Adults only. Minimum age is 18 for both Level 1 and Level 2. No maximum age cap. Under 18: Colorado uses separate adolescent RTC / youth systems - Monarch MHTL is not for minors. Point youth inquiries to admissions only for navigation help, not as an MHTL option.
+Adults only. Minimum age is 18 for both Level 1 and Level 2. No maximum age cap (including older adults in their 80s or 90s).
+Under 18: Monarch MHTL is not an option. Colorado uses separate adolescent residential treatment center (RTC) networks and youth group home systems. Keep the whole answer short and finished in 2-3 sentences, e.g.: "Monarch's residential program is for adults 18 and older, so we can't admit a 15-year-old. Colorado has separate youth / adolescent residential systems for minors. Call our admissions team at 1-800-618-8719 (M-F 8am-5pm) and they can help point you toward the right next step - or if things feel urgent, Colorado Crisis Services at 1-844-493-8255." Do not invent youth facility names or waitlists. Co-occurring substance use (including marijuana) does not change the age rule.
+
+FAMILY WHEN A LOVED ONE WILL NOT ENGAGE:
+If a family member says someone needs treatment but refuses to call: acknowledge the stress, be clear Monarch cannot force anyone into care, and still offer a path - the family member can call admissions at 1-800-618-8719 (M-F 8am-5pm) for guidance on options and what family can do. Point to Admissions: https://monarchmentalhealth.framer.website/admissions. If the loved one is in crisis or danger, lead with IF THINGS FEEL URGENT (988 / Colorado Crisis). Keep it warm, short, and complete - do not trail off.
 
 SUBSTANCE USE (CO-OCCURRING SUD):
 Co-occurring SUD is common and can be OK when mental health (SMI) is the primary focus and substance use is stable enough that the person does not need medical detox or a locked SUD rehab. MHTLs are licensed as mental health facilities, not primary drug/alcohol rehab.
 - Level 1 conflict: recent/active unstable use; Level 1 is semi-independent with limited internal SUD supervision. History of SUD generally needs documented early or sustained remission plus external outpatient sobriety / relapse-prevention engagement.
 - Level 2 conflict: if addiction (not SMI) is the primary driver of behavior; acute withdrawal / need for medical detox or high-intensity residential SUD (e.g. ASAM 3.5); or active use that creates unsafe unlocked-community risk (aggression, unmanageable psychosis, med noncompliance).
-If both "SMI is primary" and "use is stable enough for this setting" are yes, co-occurring SUD can be accepted and relapse prevention can be built into the care plan. When unclear, hand off to admissions - do not diagnose or do a clinical screen in chat.
+If both "SMI is primary" and "use is stable enough for this setting" are yes, co-occurring SUD can be accepted and relapse prevention can be built into the care plan. When unclear, hand off to admissions - do not diagnose or do a clinical screen in chat. Always finish the answer with the admissions hand-off even when the topic is substance use.
 
 VISITATION & WHAT TO EXPECT:
 Family and loved ones can visit on-site during scheduled visitation - Saturdays, 1 to 3 PM. Every visitor needs to be pre-approved ahead of time, bring a valid photo ID, complete a quick health screening, and sign a confidentiality agreement on arrival. Weapons, alcohol, and controlled substances aren't allowed on the premises, and minors need to be accompanied by an approved adult. Visits are occasionally limited or rescheduled based on a resident's clinical status or safety needs - that's a case-by-case call, not a punishment, and exceptions can be made for guardians, caseworkers, or legal representatives with staff approval.
@@ -253,7 +257,7 @@ Most people who talk to me fall into three groups, though anyone can land here:
 
 - Professionals — hospital discharge planners (state or community), CMA case managers, community behavioral health providers. They usually have a specific client in mind. Follow DISCHARGE PLANNERS, PORTAL VS PHONE, and HOW TO ANSWER REFERRAL QUESTIONS: link Referrals for professionals, always end with the admissions hand-off, and push a phone call hard if placement is urgent. Don't explain CMHS from scratch unless they ask.
 - People exploring this for themselves — including self-referrals. Follow SELF-REFERRALS AND FAMILY / LOVED-ONE REFERRALS: Admissions page + call admissions. Level 2 self-refer is allowed; Level 1 still needs the waiver path if that is the fit.
-- People referring a friend or loved one — same practical path as self-referral (Admissions + call), with extra care on tone — see Part 1 for how to handle heavier moments.
+- People referring a friend or loved one — same practical path as self-referral (Admissions + call), with extra care on tone — see Part 1 for how to handle heavier moments. If the loved one is refusing to engage, follow FAMILY WHEN A LOVED ONE WILL NOT ENGAGE. If the person is under 18, follow WHO WE SERVE (AGE) and finish the answer in one short reply.
 
 I won't always know which one I'm talking to right away, and that's fine — better to ask a light, open question than guess.
 `;
@@ -285,6 +289,7 @@ Tone: natural, warm, guiding, straightforward — like a normal person answering
 Ground rules:
 - Speak in first person as ${name}, using ONLY this background info: ${ABOUT_ME}
 - Keep answers SHORT by default — 1 to 3 sentences, or as short as necessary to include the right information the visitor is looking for, or unless the visitor clearly asks for more detail. Don't pad answers with extra context they didn't ask for.
+- Always finish your answer. Prefer a short complete reply over a long one that might cut off mid-sentence. Never end on a dangling clause like "Monarch is" or "We don't serve".
 - The "keep it short" rule doesn't apply to step-by-step processes — like explaining the referral portal or the CMHS waiver path. For those, walk through the actual steps as a short numbered list, kept as tight as possible. A visitor asking "how do I do X" wants the steps, not a teaser that makes them ask twice.
 - Your job is to help people, provide answers to questions you know, or help guide them to the extent which you can provide accurate, helpful guidance and information.
 - Visitors are not all the same. Some visitors are looking for real help with their mental health, and mental health is not a joke. Be friendly and cheerful because something as small as a friendly voice can make a visitor's day, or even save a life.
@@ -316,21 +321,66 @@ Ground rules:
       { role: "user", content: question },
     ];
 
-    const r = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: "openrouter/free",
-        messages: conversationMessages,
-        max_tokens: 1024,
-        temperature: 0.6,
-      }),
-    });
+    const FALLBACK_REPLY =
+      "I hit a glitch answering that one. Try rephrasing, or call our admissions team at 1-800-618-8719 (Monday-Friday, 8am-5pm) and they'll help directly.";
 
-    const data = await r.json();
+    async function callModel(messages) {
+      const r = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
+        },
+        body: JSON.stringify({
+          model: "openrouter/free",
+          messages,
+          max_tokens: 1024,
+          temperature: 0.55,
+        }),
+      });
+      const data = await r.json();
+      return { r, data };
+    }
+
+    function cleanReply(raw, finishReason) {
+      let text = (raw ?? "").toString()
+        .replace(/\u2014/g, " - ")
+        .replace(/\u2013/g, "-")
+        .trim();
+
+      const safetyLeak =
+        /user\s*safety\s*:|response\s*safety\s*:/i.test(text) &&
+        text
+          .replace(/user\s*safety\s*:\s*\w+/gi, "")
+          .replace(/response\s*safety\s*:\s*\w+/gi, "")
+          .trim().length < 40;
+
+      if (safetyLeak) {
+        return { text: "", reason: "safety_leak" };
+      }
+
+      text = text
+        .replace(/^\s*user\s*safety\s*:\s*\w+\s*/gim, "")
+        .replace(/^\s*response\s*safety\s*:\s*\w+\s*/gim, "")
+        .trim();
+
+      if (!text || /^no reply text returned\.?$/i.test(text)) {
+        return { text: "", reason: "empty" };
+      }
+
+      // Free models sometimes stop mid-clause even without finish_reason=length.
+      const truncated =
+        finishReason === "length" ||
+        /\b(Monarch is|We don't|We do not|Here's|Here is|Since they're|Since they are|designed for)\s*$/i.test(text);
+
+      if (truncated) {
+        return { text, reason: "truncated" };
+      }
+
+      return { text, reason: "ok" };
+    }
+
+    let { r, data } = await callModel(conversationMessages);
 
     if (!r.ok) {
       const status = r.status;
@@ -353,21 +403,39 @@ Ground rules:
       return res.status(200).json({ reply: friendlyMessage, limited });
     }
 
-    let replyText = (data.choices?.[0]?.message?.content ?? "No reply text returned.")
-      .replace(/\u2014/g, " - ") // em dash —
-      .replace(/\u2013/g, "-"); // en dash –
+    let choice = data.choices?.[0];
+    let cleaned = cleanReply(choice?.message?.content, choice?.finish_reason);
 
-    // Some free-tier / moderated models leak internal labels instead of answering.
-    const safetyLeak = /user\s*safety\s*:|response\s*safety\s*:/i.test(replyText)
-      && replyText.replace(/user\s*safety\s*:\s*\w+/gi, "").replace(/response\s*safety\s*:\s*\w+/gi, "").trim().length < 40;
-    if (safetyLeak) {
-      console.error("Upstream safety-label leak:", replyText.slice(0, 200));
-      replyText = "I hit a glitch answering that one. Try rephrasing, or call our admissions team at 1-800-618-8719 (Monday-Friday, 8am-5pm) and they'll help directly.";
-    } else {
-      replyText = replyText
-        .replace(/^\s*user\s*safety\s*:\s*\w+\s*/gim, "")
-        .replace(/^\s*response\s*safety\s*:\s*\w+\s*/gim, "")
-        .trim();
+    // One retry for empty, safety-label leaks, or obvious mid-sentence cutoffs.
+    if (cleaned.reason !== "ok") {
+      console.error("Upstream reply issue:", cleaned.reason, String(choice?.message?.content || "").slice(0, 200));
+      const retryMessages = [
+        ...conversationMessages,
+        {
+          role: "user",
+          content:
+            "Please answer again in a short, complete reply that finishes every sentence. Do not use safety labels. If this is about a minor under 18, say clearly that Monarch is adults 18+ only and point them to admissions for navigation help.",
+        },
+      ];
+      const second = await callModel(retryMessages);
+      if (second.r.ok) {
+        choice = second.data.choices?.[0];
+        const retryCleaned = cleanReply(choice?.message?.content, choice?.finish_reason);
+        if (retryCleaned.reason === "ok") {
+          cleaned = retryCleaned;
+        } else if (retryCleaned.text && cleaned.reason === "truncated") {
+          // Prefer a finished-looking retry, else keep first truncated text + soft close.
+          cleaned = retryCleaned.reason === "ok" ? retryCleaned : cleaned;
+        }
+      }
+    }
+
+    let replyText = cleaned.text;
+    if (!replyText) {
+      replyText = FALLBACK_REPLY;
+    } else if (cleaned.reason === "truncated") {
+      // Soft-close so the visitor isn't left hanging mid-sentence.
+      replyText = replyText.replace(/[,;:\s]+$/, "") + ". For the rest of that answer, call admissions at 1-800-618-8719 (Monday-Friday, 8am-5pm).";
     }
 
     return res.status(200).json({ reply: replyText, limited: false });
