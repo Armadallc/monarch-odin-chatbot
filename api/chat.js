@@ -65,8 +65,16 @@ PRIVACY & THIS CHAT:
 Worth knowing: this chat isn't a clinical record, and there's no system behind me set up to store or transmit protected health information (PHI). If we need sensitive details to actually help you, that conversation should happen directly with our team — by phone or through the portal — not here.
 
 WRITING:
+Write like a person texting a clear answer - short paragraphs, plain sentences. Do NOT use markdown in replies: no **bold**, no ## headings, no bullet markers that look like code. If you need a short list, use plain numbered lines like "1. Get Health First Colorado enrolled." without bold labels. Save the admissions phone hand-off for when they ask how to get started, how to refer, or clearly want next steps - not when they are only browsing or learning.
+
+Visitor: "I'm just here to learn more about Monarch."
+Me: "Hey - happy to give you the lay of the land. We're a Colorado residential mental health program for adults with serious mental illness - housing plus support toward more independence. We have Level 1 (transitional living) and Level 2 (more clinical support on-site). What are you most curious about - programs, how funding works, or daily life here?"
+
 Visitor: "How do I get into one of your homes?"
-Me: "Good question! Best next step is to call our admissions team at 1-800-618-8719, or start on our Admissions page. We'll figure out eligibility with you - including whether Level 2 or Level 1 fits - and guide the next steps. Want that link?"
+Me: "Good question! Best next step is to call our admissions team at 1-800-618-8719, or start on our Admissions page. We'll figure out eligibility with you - including whether Level 1 or Level 2 fits - and guide the next steps. Want that link?"
+
+Visitor: "I already have Medicaid / Health First Colorado."
+Me: "Great - that unlocks the door. Health First Colorado is the baseline for both levels. Level 2 can move forward with Medicaid alone (no CMHS waiver). Level 1 still needs the CMHS waiver on top. An assessment decides which level fits - I can't pick it for you. Call admissions at 1-800-618-8719 and they'll screen you and guide next steps."
 
 Visitor: "I'm a discharge planner — how do I refer someone?"
 Me: "Happy to help. You can call admissions at 1-800-618-8719 and we'll guide you based on whether an assessment is done and whether they already have a CMHS waiver. If placement is urgent, call us so we can check bed availability - don't rely on the portal alone for urgent cases."
@@ -117,6 +125,8 @@ Level 2 (Supported therapeutic transitional living): These homes provide whole-p
 
 FUNDING & ELIGIBILITY:
 Let's talk money, simply. Monarch is a Medicaid-only program — no private pay, no other insurance accepted. Health First Colorado (Colorado's Medicaid) is the baseline for both levels of care. Level 1 requires the Community Mental Health Supports (CMHS) waiver on top of that Medicaid enrollment. Level 2 doesn't require the CMHS waiver specifically — full Health First Colorado Medicaid benefits are enough on their own. If someone doesn't have Medicaid yet, that's the very first step — before the waiver, before a referral, before anything else.
+
+When a visitor says they already have Medicaid / Health First Colorado: do NOT assume they are automatically on a Level 2 path only. Say Medicaid is the baseline for both levels; Level 2 needs no CMHS waiver; Level 1 still needs the CMHS waiver; an assessment (not you) decides level of care; then hand off to admissions. Never invent that Medicaid alone means Level 2 placement.
 
 ASSESSMENT (who decides Level 1 vs Level 2):
 An individual who may be eligible for Level 1 or Level 2 can be assessed either through their county Case Management Agency (CMA) or through a treatment program provider such as Monarch. Assessment is not CMA-only. Level of care is not something the visitor picks - an assessment determines it. If someone asks which level to choose, say briefly that an assessment decides it, then hand off to admissions. Don't go deep into LOC criteria. Funding facts you can still state: Level 1 needs the CMHS waiver plus Medicaid; Level 2 needs Medicaid only (no CMHS waiver).
@@ -291,6 +301,9 @@ Ground rules:
 - Keep answers SHORT by default — 1 to 3 sentences, or as short as necessary to include the right information the visitor is looking for, or unless the visitor clearly asks for more detail. Don't pad answers with extra context they didn't ask for.
 - Always finish your answer. Prefer a short complete reply over a long one that might cut off mid-sentence. Never end on a dangling clause like "Monarch is" or "We don't serve".
 - The "keep it short" rule doesn't apply to step-by-step processes — like explaining the referral portal or the CMHS waiver path. For those, walk through the actual steps as a short numbered list, kept as tight as possible. A visitor asking "how do I do X" wants the steps, not a teaser that makes them ask twice.
+- PLAIN PROSE ONLY in "reply": never use markdown (no **bold**, no ## headings, no * or - bullet markers, no code fences). Use short paragraphs. For steps, use plain "1. ..." "2. ..." lines with normal words - no bold labels. Visitors read this in a chat bubble; markdown symbols look like broken code.
+- Match intent: if someone is browsing or "just learning," give a warm overview and ask what they're curious about - do NOT lead with "call admissions" unless they ask how to get started, how to refer, or clearly want next steps. The admissions hand-off is for action intent, not curiosity alone.
+- If they already have Medicaid / Health First Colorado: acknowledge it, explain it is the baseline for both levels (L2: Medicaid alone; L1: still needs CMHS waiver), say assessment decides level, then offer admissions. Do not collapse that into "you're on the Level 2 pathway" as if Level 1 is off the table.
 - Your job is to help people, provide answers to questions you know, or help guide them to the extent which you can provide accurate, helpful guidance and information.
 - Visitors are not all the same. Some visitors are looking for real help with their mental health, and mental health is not a joke. Be friendly and cheerful because something as small as a friendly voice can make a visitor's day, or even save a life.
 - Visitors can be anyone because this is a public website. However, most visitors will fall into 3 categories — see Part 4 of your background info for who they typically are and what they typically need.
@@ -313,11 +326,11 @@ Ground rules:
 - Never use em dashes (\u2014) or en dashes (\u2013). Use a hyphen (-), a comma, or a period instead. Hyphenated words like case-by-case are fine.
 - Never output internal safety labels, moderation tags, or meta lines such as "User Safety:" or "Response Safety:" - those are not part of your reply to the visitor.
 - When asked for medical advice, a diagnosis, or treatment recommendations, refuse briefly and lean on the DISCLAIMER in your background, then offer admissions or crisis resources as appropriate.
-- OUTPUT FORMAT (required): Respond with ONLY a single JSON object, no markdown fences, no extra text before or after it. Shape: {"reply":"<your visitor-facing answer>","followUps":["..."]}.
+- OUTPUT FORMAT (required): Respond with ONLY a single JSON object, no markdown fences, no extra text before or after it. Shape: {"reply":"<your visitor-facing answer>","followUps":["..."]}. Never put JSON, braces, or "followUps" inside the "reply" string itself.
 - "reply" is the full answer the visitor reads. Apply all tone and content rules above to "reply" only.
-- "followUps" is an array of 0 to 3 short follow-up questions the visitor might ask next, related or peripheral to THIS answer, phrased as the visitor would type them. They become clickable chips.
-- Use "followUps": [] when follow-ups are unnecessary - crisis/988 replies, closed one-fact answers, small talk, off-topic redirects, or when the next step is clearly "call admissions" and nothing else helps.
-- Follow-ups must stay informational / navigational (program, referral path, funding, visitation, pages). Never ask for PHI, diagnoses, or clinical details. Never invent facts not in your background.`;
+- "followUps" is an array of 0 to 3 short follow-up questions the visitor might ask next about Monarch, related or peripheral to THIS answer, phrased as the visitor would type them. They become clickable chips.
+- Follow-ups must be ABOUT Monarch / the site / next info needs (e.g. "What's the difference between Level 1 and Level 2?", "Where is the Careers page?"). NEVER put YOUR intake questions in followUps - no "Are you a self-referral?", "Do you think you need Level 1 or 2?", "Do you have questions about admissions?", "Do you have a diagnosis?", "Are you living independently?". Never ask for PHI. Never invent facts not in your background.
+- Use "followUps": [] when follow-ups are unnecessary - crisis/988 replies, closed one-fact answers, small talk, off-topic redirects, or when the next step is clearly "call admissions" and nothing else helps.`;
 
 
     const conversationMessages = [
@@ -331,11 +344,41 @@ Ground rules:
 
     function normalizeFollowUps(value) {
       if (!Array.isArray(value)) return [];
+      const intakeLike =
+        /^(are you|do you think|do you have questions|have you|are you a self|do you need|what's weighing|what brings you|for yourself or)/i;
+      const phiLike =
+        /\b(diagnos|medicaid status|living independently|primary mental health|phi|ssn|date of birth)\b/i;
       return value
         .filter((q) => typeof q === "string")
         .map((q) => q.replace(/\u2014/g, " - ").replace(/\u2013/g, "-").trim())
         .filter((q) => q.length > 0 && q.length <= 140)
+        .filter((q) => !intakeLike.test(q) && !phiLike.test(q))
         .slice(0, 3);
+    }
+
+    function stripMarkdownLite(text) {
+      return text
+        .replace(/\*\*([^*]+)\*\*/g, "$1")
+        .replace(/__([^_]+)__/g, "$1")
+        .replace(/^#{1,6}\s+/gm, "")
+        .replace(/^```[\s\S]*?```$/gm, "")
+        .replace(/^[*-]\s+/gm, "")
+        .trim();
+    }
+
+    function extractReplyFromBrokenJson(text) {
+      const m = text.match(/"reply"\s*:\s*"((?:\\.|[^"\\])*)"/);
+      if (!m) return null;
+      try {
+        return JSON.parse(`"${m[1]}"`);
+      } catch (_) {
+        return m[1]
+          .replace(/\\n/g, "\n")
+          .replace(/\\"/g, '"')
+          .replace(/\\u([0-9a-fA-F]{4})/g, (_, h) =>
+            String.fromCharCode(parseInt(h, 16))
+          );
+      }
     }
 
     function parseModelPayload(raw) {
@@ -360,7 +403,7 @@ Ground rules:
         // fall through
       }
 
-      // Object embedded in prose.
+      // Object embedded in prose / trailing junk braces.
       const brace = text.indexOf("{");
       const lastBrace = text.lastIndexOf("}");
       if (brace >= 0 && lastBrace > brace) {
@@ -374,7 +417,32 @@ Ground rules:
             };
           }
         } catch (_) {
-          // fall through
+          // Extra trailing braces (e.g. ..."]}}) - try trimming one } at a time.
+          let slice = text.slice(brace, lastBrace + 1);
+          for (let i = 0; i < 3; i++) {
+            if (!slice.endsWith("}")) break;
+            slice = slice.slice(0, -1);
+            try {
+              const parsed = JSON.parse(slice);
+              if (parsed && typeof parsed.reply === "string") {
+                return {
+                  reply: parsed.reply,
+                  followUps: normalizeFollowUps(parsed.followUps),
+                  reason: "ok",
+                };
+              }
+            } catch (_) {
+              /* continue */
+            }
+          }
+          const recovered = extractReplyFromBrokenJson(text);
+          if (recovered) {
+            return {
+              reply: recovered,
+              followUps: [],
+              reason: "ok",
+            };
+          }
         }
       }
 
@@ -392,6 +460,15 @@ Ground rules:
           followUps,
           reason: "ok",
         };
+      }
+
+      // Looks like JSON but failed to parse - never show raw JSON to visitors.
+      if (/^\s*\{/.test(text) && /"reply"\s*:/.test(text)) {
+        const recovered = extractReplyFromBrokenJson(text);
+        if (recovered) {
+          return { reply: recovered, followUps: [], reason: "ok" };
+        }
+        return { reply: "", followUps: [], reason: "empty" };
       }
 
       return { reply: text, followUps: [], reason: "ok" };
@@ -417,11 +494,18 @@ Ground rules:
 
     function cleanReply(raw, finishReason) {
       const parsed = parseModelPayload(raw);
-      let text = (parsed.reply ?? "")
-        .replace(/\u2014/g, " - ")
-        .replace(/\u2013/g, "-")
-        .trim();
+      let text = stripMarkdownLite(
+        (parsed.reply ?? "")
+          .replace(/\u2014/g, " - ")
+          .replace(/\u2013/g, "-")
+          .trim()
+      );
       const followUps = parsed.followUps || [];
+
+      // Never surface raw JSON payloads in the chat bubble.
+      if (/^\s*\{/.test(text) && /"reply"\s*:/.test(text)) {
+        return { text: "", followUps: [], reason: "empty" };
+      }
 
       const safetyLeak =
         /user\s*safety\s*:|response\s*safety\s*:/i.test(text) &&
