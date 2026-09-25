@@ -273,11 +273,11 @@ export default async function handler(req, res) {
 
   try {
     if (req.method !== "POST") {
-      return res.status(200).json({ reply: "This endpoint only accepts POST requests." });
+      return res.status(200).json({ reply: "This endpoint only accepts POST requests.", followUps: [] });
     }
 
     if (!process.env.OPENROUTER_API_KEY) {
-      return res.status(200).json({ reply: "ERROR: OPENROUTER_API_KEY is missing on the server." });
+      return res.status(200).json({ reply: "ERROR: OPENROUTER_API_KEY is missing on the server.", followUps: [] });
     }
 
     const { question, name, history } = req.body || {};
@@ -312,7 +312,12 @@ Ground rules:
 - Never sound like an FAQ page or a press release. Just answer like a person would in a real conversation.
 - Never use em dashes (\u2014) or en dashes (\u2013). Use a hyphen (-), a comma, or a period instead. Hyphenated words like case-by-case are fine.
 - Never output internal safety labels, moderation tags, or meta lines such as "User Safety:" or "Response Safety:" - those are not part of your reply to the visitor.
-- When asked for medical advice, a diagnosis, or treatment recommendations, refuse briefly and lean on the DISCLAIMER in your background, then offer admissions or crisis resources as appropriate.`;
+- When asked for medical advice, a diagnosis, or treatment recommendations, refuse briefly and lean on the DISCLAIMER in your background, then offer admissions or crisis resources as appropriate.
+- OUTPUT FORMAT (required): Respond with ONLY a single JSON object, no markdown fences, no extra text before or after it. Shape: {"reply":"<your visitor-facing answer>","followUps":["..."]}.
+- "reply" is the full answer the visitor reads. Apply all tone and content rules above to "reply" only.
+- "followUps" is an array of 0 to 3 short follow-up questions the visitor might ask next, related or peripheral to THIS answer, phrased as the visitor would type them. They become clickable chips.
+- Use "followUps": [] when follow-ups are unnecessary - crisis/988 replies, closed one-fact answers, small talk, off-topic redirects, or when the next step is clearly "call admissions" and nothing else helps.
+- Follow-ups must stay informational / navigational (program, referral path, funding, visitation, pages). Never ask for PHI, diagnoses, or clinical details. Never invent facts not in your background.`;
 
 
     const conversationMessages = [
@@ -323,6 +328,74 @@ Ground rules:
 
     const FALLBACK_REPLY =
       "I hit a glitch answering that one. Try rephrasing, or call our admissions team at 1-800-618-8719 (Monday-Friday, 8am-5pm) and they'll help directly.";
+
+    function normalizeFollowUps(value) {
+      if (!Array.isArray(value)) return [];
+      return value
+        .filter((q) => typeof q === "string")
+        .map((q) => q.replace(/\u2014/g, " - ").replace(/\u2013/g, "-").trim())
+        .filter((q) => q.length > 0 && q.length <= 140)
+        .slice(0, 3);
+    }
+
+    function parseModelPayload(raw) {
+      let text = (raw ?? "").toString().trim();
+      if (!text) return { reply: "", followUps: [], reason: "empty" };
+
+      // Strip markdown fences if the model wraps JSON anyway.
+      const fenced = text.match(/^```(?:json)?\s*([\s\S]*?)```$/i);
+      if (fenced) text = fenced[1].trim();
+
+      // Prefer a full JSON object.
+      try {
+        const parsed = JSON.parse(text);
+        if (parsed && typeof parsed.reply === "string") {
+          return {
+            reply: parsed.reply,
+            followUps: normalizeFollowUps(parsed.followUps),
+            reason: "ok",
+          };
+        }
+      } catch (_) {
+        // fall through
+      }
+
+      // Object embedded in prose.
+      const brace = text.indexOf("{");
+      const lastBrace = text.lastIndexOf("}");
+      if (brace >= 0 && lastBrace > brace) {
+        try {
+          const parsed = JSON.parse(text.slice(brace, lastBrace + 1));
+          if (parsed && typeof parsed.reply === "string") {
+            return {
+              reply: parsed.reply,
+              followUps: normalizeFollowUps(parsed.followUps),
+              reason: "ok",
+            };
+          }
+        } catch (_) {
+          // fall through
+        }
+      }
+
+      // FOLLOWUPS: [...] trailer
+      const followMatch = text.match(/\nFOLLOWUPS:\s*(\[[\s\S]*\])\s*$/i);
+      if (followMatch) {
+        let followUps = [];
+        try {
+          followUps = normalizeFollowUps(JSON.parse(followMatch[1]));
+        } catch (_) {
+          followUps = [];
+        }
+        return {
+          reply: text.slice(0, followMatch.index).trim(),
+          followUps,
+          reason: "ok",
+        };
+      }
+
+      return { reply: text, followUps: [], reason: "ok" };
+    }
 
     async function callModel(messages) {
       const r = await fetch("https://openrouter.ai/api/v1/chat/completions", {
@@ -343,10 +416,12 @@ Ground rules:
     }
 
     function cleanReply(raw, finishReason) {
-      let text = (raw ?? "").toString()
+      const parsed = parseModelPayload(raw);
+      let text = (parsed.reply ?? "")
         .replace(/\u2014/g, " - ")
         .replace(/\u2013/g, "-")
         .trim();
+      const followUps = parsed.followUps || [];
 
       const safetyLeak =
         /user\s*safety\s*:|response\s*safety\s*:/i.test(text) &&
@@ -356,7 +431,7 @@ Ground rules:
           .trim().length < 40;
 
       if (safetyLeak) {
-        return { text: "", reason: "safety_leak" };
+        return { text: "", followUps: [], reason: "safety_leak" };
       }
 
       text = text
@@ -365,19 +440,18 @@ Ground rules:
         .trim();
 
       if (!text || /^no reply text returned\.?$/i.test(text)) {
-        return { text: "", reason: "empty" };
+        return { text: "", followUps: [], reason: "empty" };
       }
 
-      // Free models sometimes stop mid-clause even without finish_reason=length.
       const truncated =
         finishReason === "length" ||
         /\b(Monarch is|We don't|We do not|Here's|Here is|Since they're|Since they are|designed for)\s*$/i.test(text);
 
       if (truncated) {
-        return { text, reason: "truncated" };
+        return { text, followUps: [], reason: "truncated" };
       }
 
-      return { text, reason: "ok" };
+      return { text, followUps, reason: "ok" };
     }
 
     let { r, data } = await callModel(conversationMessages);
@@ -400,13 +474,12 @@ Ground rules:
       }
 
       console.error("Upstream API error:", JSON.stringify(data));
-      return res.status(200).json({ reply: friendlyMessage, limited });
+      return res.status(200).json({ reply: friendlyMessage, followUps: [], limited });
     }
 
     let choice = data.choices?.[0];
     let cleaned = cleanReply(choice?.message?.content, choice?.finish_reason);
 
-    // One retry for empty, safety-label leaks, or obvious mid-sentence cutoffs.
     if (cleaned.reason !== "ok") {
       console.error("Upstream reply issue:", cleaned.reason, String(choice?.message?.content || "").slice(0, 200));
       const retryMessages = [
@@ -414,7 +487,7 @@ Ground rules:
         {
           role: "user",
           content:
-            "Please answer again in a short, complete reply that finishes every sentence. Do not use safety labels. If this is about a minor under 18, say clearly that Monarch is adults 18+ only and point them to admissions for navigation help.",
+            'Please answer again as ONLY JSON: {"reply":"...","followUps":[]} or up to 3 follow-ups. Short complete sentences. No safety labels. If this is about a minor under 18, reply must say Monarch is adults 18+ only and point to admissions.',
         },
       ];
       const second = await callModel(retryMessages);
@@ -424,26 +497,28 @@ Ground rules:
         if (retryCleaned.reason === "ok") {
           cleaned = retryCleaned;
         } else if (retryCleaned.text && cleaned.reason === "truncated") {
-          // Prefer a finished-looking retry, else keep first truncated text + soft close.
           cleaned = retryCleaned.reason === "ok" ? retryCleaned : cleaned;
         }
       }
     }
 
     let replyText = cleaned.text;
+    let followUps = cleaned.followUps || [];
     if (!replyText) {
       replyText = FALLBACK_REPLY;
+      followUps = [];
     } else if (cleaned.reason === "truncated") {
-      // Soft-close so the visitor isn't left hanging mid-sentence.
       replyText = replyText.replace(/[,;:\s]+$/, "") + ". For the rest of that answer, call admissions at 1-800-618-8719 (Monday-Friday, 8am-5pm).";
+      followUps = [];
     }
 
-    return res.status(200).json({ reply: replyText, limited: false });
+    return res.status(200).json({ reply: replyText, followUps, limited: false });
 
   } catch (err) {
     console.error("Server crash:", err.message);
     return res.status(200).json({
       reply: "Something went wrong on my end. Give it another try in a moment!",
+      followUps: [],
       limited: false,
     });
   }
