@@ -490,7 +490,7 @@ Ground rules:
     }
 
     async function callModel(messages) {
-      const model = process.env.OPENROUTER_MODEL || "openrouter/free";
+      const model = process.env.OPENROUTER_MODEL || "google/gemini-3.1-flash-lite";
       const r = await fetch("https://openrouter.ai/api/v1/chat/completions", {
         method: "POST",
         headers: {
