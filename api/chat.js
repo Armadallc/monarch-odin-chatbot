@@ -316,11 +316,11 @@ export default async function handler(req, res) {
 
   try {
     if (req.method !== "POST") {
-      return res.status(200).json({ reply: "This endpoint only accepts POST requests.", followUps: [] });
+      return res.status(200).json({ reply: "This endpoint only accepts POST requests.", followUps: [], expression: "neutral" });
     }
 
     if (!process.env.OPENROUTER_API_KEY) {
-      return res.status(200).json({ reply: "ERROR: OPENROUTER_API_KEY is missing on the server.", followUps: [] });
+      return res.status(200).json({ reply: "ERROR: OPENROUTER_API_KEY is missing on the server.", followUps: [], expression: "neutral" });
     }
 
     const { question, name, history } = req.body || {};
@@ -337,7 +337,7 @@ export default async function handler(req, res) {
     }
 
     if (isCrisisMessage(question)) {
-      return res.status(200).json({ reply: CRISIS_REPLY, followUps: [], limited: false });
+      return res.status(200).json({ reply: CRISIS_REPLY, followUps: [], limited: false, expression: "caring" });
     }
 
     const systemPrompt = `You are ${name}, chatting directly with a visitor on your own website — speaking in first person as yourself, not as a generic assistant.
@@ -376,7 +376,8 @@ Ground rules:
 - Never use em dashes (\u2014) or en dashes (\u2013). Use a hyphen (-), a comma, or a period instead. Hyphenated words like case-by-case are fine.
 - Never output internal safety labels, moderation tags, or meta lines such as "User Safety:" or "Response Safety:" - those are not part of your reply to the visitor.
 - When asked for medical advice, a diagnosis, or treatment recommendations, refuse briefly and lean on the DISCLAIMER in your background, then offer admissions or crisis resources as appropriate.
-- OUTPUT FORMAT (required): Respond with ONLY a single JSON object, no markdown fences, no extra text before or after it. Shape: {"reply":"<your visitor-facing answer>","followUps":["..."]}. Never put JSON, braces, or "followUps" inside the "reply" string itself.
+- OUTPUT FORMAT (required): Respond with ONLY a single JSON object, no markdown fences, no extra text before or after it. Shape: {"reply":"<your visitor-facing answer>","followUps":["..."],"expression":"neutral"}. Never put JSON, braces, "followUps", or "expression" inside the "reply" string itself.
+- "expression" is ONE word from this list: neutral, happy, caring, calm. It sets your character's face next to the reply. happy = upbeat, friendly, or small-talk replies. caring = empathy for someone stressed, worried, grieving, or struggling. calm = steady, reassuring, or serious informational replies. neutral = plain facts or anything else. Heavy, emotional, or crisis-adjacent topics must use caring or calm, NEVER happy. When unsure, use neutral.
 - "reply" is the full answer the visitor reads. Apply all tone and content rules above to "reply" only.
 - "followUps" is an array of 0 to 3 short follow-up questions the visitor might ask next about Monarch, related or peripheral to THIS answer, phrased as the visitor would type them. They become clickable chips.
 - Follow-ups must be ABOUT Monarch / the site / next info needs (e.g. "What's the difference between Level 1 and Level 2?", "Where is the Careers page?"). NEVER put YOUR intake questions in followUps - no "Are you a self-referral?", "Do you think you need Level 1 or 2?", "Do you have questions about admissions?", "Do you have a diagnosis?", "Are you living independently?". Never ask for PHI. Never invent facts not in your background.
@@ -392,6 +393,23 @@ Ground rules:
 
     const FALLBACK_REPLY =
       "I hit a glitch answering that one. Try rephrasing, or call our admissions team at 1-800-618-8719 (Monday-Friday, 8am-5pm) and they'll help directly.";
+
+    // "thinking" is frontend-only (shown while waiting), so the model may not pick it.
+    const MODEL_EXPRESSIONS = ["neutral", "happy", "caring", "calm"];
+
+    function normalizeExpression(value) {
+      const v = typeof value === "string" ? value.trim().toLowerCase() : "";
+      return MODEL_EXPRESSIONS.includes(v) ? v : "neutral";
+    }
+
+    function extractExpression(raw) {
+      const m = (raw ?? "").toString().match(/"expression"\s*:\s*"([^"]*)"/);
+      return normalizeExpression(m ? m[1] : "");
+    }
+
+    function mentionsCrisisResources(text) {
+      return /\b988\b|1-844-493-8255|\b38255\b|colorado crisis/i.test(text || "");
+    }
 
     function normalizeFollowUps(value) {
       if (!Array.isArray(value)) return [];
@@ -606,11 +624,13 @@ Ground rules:
         finishReason === "length" ||
         /\b(Monarch is|We don't|We do not|Here's|Here is|Since they're|Since they are|designed for)\s*$/i.test(text);
 
+      const expression = extractExpression(raw);
+
       if (truncated) {
-        return { text, followUps: [], reason: "truncated" };
+        return { text, followUps: [], reason: "truncated", expression };
       }
 
-      return { text, followUps, reason: "ok" };
+      return { text, followUps, reason: "ok", expression };
     }
 
     let { r, data } = await callModelWithRetry(conversationMessages);
@@ -634,7 +654,7 @@ Ground rules:
       }
 
       console.error("Upstream API error:", status, errCode, JSON.stringify(data));
-      return res.status(200).json({ reply: friendlyMessage, followUps: [], limited });
+      return res.status(200).json({ reply: friendlyMessage, followUps: [], limited, expression: "neutral" });
     }
 
     let choice = data.choices?.[0];
@@ -647,7 +667,7 @@ Ground rules:
         {
           role: "user",
           content:
-            'Please answer again as ONLY JSON: {"reply":"...","followUps":[]} or up to 3 follow-ups. Short complete sentences. No safety labels. If this is about a minor under 18, reply must say Monarch is adults 18+ only and point to admissions.',
+            'Please answer again as ONLY JSON: {"reply":"...","followUps":[],"expression":"neutral"} or up to 3 follow-ups, and expression as one of neutral, happy, caring, calm. Short complete sentences. No safety labels. If this is about a minor under 18, reply must say Monarch is adults 18+ only and point to admissions.',
         },
       ];
       const second = await callModelWithRetry(retryMessages);
@@ -664,15 +684,22 @@ Ground rules:
 
     let replyText = cleaned.text;
     let followUps = cleaned.followUps || [];
+    let expression = normalizeExpression(cleaned.expression);
     if (!replyText) {
       replyText = FALLBACK_REPLY;
       followUps = [];
+      expression = "neutral";
     } else if (cleaned.reason === "truncated") {
       replyText = replyText.replace(/[,;:\s]+$/, "") + ". For the rest of that answer, call admissions at 1-800-618-8719 (Monday-Friday, 8am-5pm).";
       followUps = [];
     }
 
-    return res.status(200).json({ reply: replyText, followUps, limited: false });
+    if (expression !== "caring" && mentionsCrisisResources(replyText)) {
+      console.warn(`[lux] heavy-reply expression override (${expression} -> caring): "${replyText.slice(0, 40)}"`);
+      expression = "caring";
+    }
+
+    return res.status(200).json({ reply: replyText, followUps, limited: false, expression });
 
   } catch (err) {
     console.error("Server crash:", err.message);
@@ -680,6 +707,7 @@ Ground rules:
       reply: "Something went wrong on my end. Give it another try in a moment!",
       followUps: [],
       limited: false,
+      expression: "neutral",
     });
   }
 }
