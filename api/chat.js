@@ -452,8 +452,14 @@ Ground rules:
       const neg = new RegExp(`\\b(${Object.keys(NEGATIVE_CONTRACTIONS).join("|")})\\b`, "gi");
       const lead = new RegExp(`\\b(${Object.keys(LEADING_CONTRACTIONS).join("|")})\\b(?=\\s+[a-z0-9])`, "gi");
       // Pronoun forms first, so "you are not" becomes "you're not" rather than "you aren't".
+      // Stressed "is" after "how <adjective>" can't contract: "how hard it is to..." (not "it's").
+      const afterHowPhrase = /\bhow\s+(?:[\w-]+\s+){1,4}$/i;
       return text
-        .replace(lead, (m) => matchCase(m, LEADING_CONTRACTIONS[m.toLowerCase()]))
+        .replace(lead, (m, _g, offset, whole) =>
+          afterHowPhrase.test(whole.slice(Math.max(0, offset - 60), offset))
+            ? m
+            : matchCase(m, LEADING_CONTRACTIONS[m.toLowerCase()])
+        )
         .replace(neg, (m) => matchCase(m, NEGATIVE_CONTRACTIONS[m.toLowerCase()]));
     }
 
