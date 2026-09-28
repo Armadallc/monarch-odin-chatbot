@@ -414,6 +414,34 @@ Ground rules:
       return normalizeExpression(m ? m[1] : "");
     }
 
+    // Lux always speaks with contractions; the model tends to spell them out on serious topics.
+    const NEGATIVE_CONTRACTIONS = {
+      "do not": "don't", "does not": "doesn't", "did not": "didn't", "cannot": "can't", "can not": "can't",
+      "is not": "isn't", "are not": "aren't", "was not": "wasn't", "were not": "weren't", "will not": "won't",
+      "would not": "wouldn't", "should not": "shouldn't", "could not": "couldn't", "have not": "haven't", "has not": "hasn't",
+    };
+    // These can't end a clause ("that's what it is" -> not "it's"), so only contract before another word.
+    const LEADING_CONTRACTIONS = {
+      "i am": "I'm", "you are": "you're", "we are": "we're", "they are": "they're", "it is": "it's", "that is": "that's",
+      "there is": "there's", "here is": "here's", "what is": "what's", "he is": "he's", "she is": "she's",
+      "i will": "I'll", "you will": "you'll", "we will": "we'll", "they will": "they'll", "he will": "he'll", "she will": "she'll",
+    };
+
+    function matchCase(original, replacement) {
+      return original[0] === original[0].toUpperCase()
+        ? replacement[0].toUpperCase() + replacement.slice(1)
+        : replacement;
+    }
+
+    function applyContractions(text) {
+      const neg = new RegExp(`\\b(${Object.keys(NEGATIVE_CONTRACTIONS).join("|")})\\b`, "gi");
+      const lead = new RegExp(`\\b(${Object.keys(LEADING_CONTRACTIONS).join("|")})\\b(?=\\s+[a-z0-9])`, "gi");
+      // Pronoun forms first, so "you are not" becomes "you're not" rather than "you aren't".
+      return text
+        .replace(lead, (m) => matchCase(m, LEADING_CONTRACTIONS[m.toLowerCase()]))
+        .replace(neg, (m) => matchCase(m, NEGATIVE_CONTRACTIONS[m.toLowerCase()]));
+    }
+
     function mentionsCrisisResources(text) {
       return /\b988\b|1-844-493-8255|\b38255\b|colorado crisis/i.test(text || "");
     }
@@ -700,6 +728,8 @@ Ground rules:
       replyText = replyText.replace(/[,;:\s]+$/, "") + ". For the rest of that answer, call admissions at 1-800-618-8719 (Monday-Friday, 8am-5pm).";
       followUps = [];
     }
+
+    replyText = applyContractions(replyText);
 
     if (expression !== "caring" && mentionsCrisisResources(replyText)) {
       console.warn(`[lux] heavy-reply expression override (${expression} -> caring): "${replyText.slice(0, 40)}"`);
